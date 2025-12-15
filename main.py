@@ -12,6 +12,11 @@
 from autoclicker.ui import AutoClickerApp
 
 
-if __name__ == "__main__":
+def main():
+    """애플리케이션 진입점"""
     app = AutoClickerApp()
     app.mainloop()
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,6 @@
+include README.md
+include requirements.txt
+include LICENSE
+recursive-include autoclicker *.json
+recursive-include autoclicker/assets *.ico *.png *.jpg *.jpeg
+
