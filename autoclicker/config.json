@@ -1,10 +1,11 @@
 {
-  "hotkey_start": "F6",
+  "hotkey_start": "ALT",
   "hotkey_stop": "F7",
   "click_interval": "0.085",
   "click_type": "우클릭",
   "click_mode": "반복",
   "random_variance": "0.07",
   "random_variance_enabled": true,
-  "github_repo": ""
+  "github_repo": "",
+  "appearance_mode": "light"
 }

@@ -16,6 +16,7 @@ DEFAULT_CONFIG = {
     "click_mode": "반복",
     "random_variance": "0.03",
     "random_variance_enabled": True,
+    "appearance_mode": "dark",  # "dark" 또는 "light"
     "github_repo": "",  # GitHub 저장소 정보 (예: "username/repo-name")
 }
 
