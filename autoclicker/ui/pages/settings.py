@@ -41,6 +41,38 @@ class SettingsPage(BasePage):
         # 랜덤 변동값 항목
         self._create_variance_item(self.autoclicker_settings_section)
 
+        # ========== 매크로 설정 섹션 프레임 ==========
+        self.macro_settings_section = ctk.CTkFrame(scrollable_frame, fg_color="transparent")
+        self.macro_settings_section.pack(fill="x", padx=0, pady=0)
+
+        ctk.CTkLabel(
+            self.macro_settings_section,
+            text="매크로 설정",
+            font=ctk.CTkFont(size=20, weight="bold"),
+            anchor="w"
+        ).pack(fill="x", padx=20, pady=(15, 10))
+
+        # 녹화 단축키 항목
+        self.hotkey_macro_record_btn = self._create_setting_item(
+            self.macro_settings_section, "녹화 단축키", "매크로 녹화를 시작/중지합니다",
+            self.controller.config.get("hotkey_macro_record", "F8"),
+            lambda: self.controller._start_hotkey_setting("macro_record")
+        )
+
+        # 재생 단축키 항목
+        self.hotkey_macro_start_btn = self._create_setting_item(
+            self.macro_settings_section, "재생 단축키", "녹화된 매크로를 재생합니다",
+            self.controller.config.get("hotkey_macro_start", "F9"),
+            lambda: self.controller._start_hotkey_setting("macro_start")
+        )
+
+        # 중지 단축키 항목
+        self.hotkey_macro_stop_btn = self._create_setting_item(
+            self.macro_settings_section, "중지 단축키", "매크로 재생을 중지합니다",
+            self.controller.config.get("hotkey_macro_stop", "F10"),
+            lambda: self.controller._start_hotkey_setting("macro_stop")
+        )
+
         # ========== 메인 설정 섹션 프레임 ==========
         self.main_settings_section = ctk.CTkFrame(scrollable_frame, fg_color="transparent")
         self.main_settings_section.pack(fill="x", padx=0, pady=0)
@@ -214,6 +246,9 @@ class SettingsPage(BasePage):
             "hotkey_stop": self.hotkey_stop_btn.cget("text"),
             "random_variance": self.variance_entry.get().strip(),
             "random_variance_enabled": bool(self.variance_switch.get()),
+            "hotkey_macro_record": self.hotkey_macro_record_btn.cget("text"),
+            "hotkey_macro_start": self.hotkey_macro_start_btn.cget("text"),
+            "hotkey_macro_stop": self.hotkey_macro_stop_btn.cget("text"),
         }
 
     def apply_settings(self, config):
@@ -239,3 +274,8 @@ class SettingsPage(BasePage):
 
         appearance_mode = config.get("appearance_mode", "dark")
         self.theme_mode.set("라이트모드" if appearance_mode == "light" else "다크모드")
+
+        # 매크로 설정 적용
+        self.hotkey_macro_record_btn.configure(text=config.get("hotkey_macro_record", "F8"), fg_color="#404040")
+        self.hotkey_macro_start_btn.configure(text=config.get("hotkey_macro_start", "F9"), fg_color="#404040")
+        self.hotkey_macro_stop_btn.configure(text=config.get("hotkey_macro_stop", "F10"), fg_color="#404040")

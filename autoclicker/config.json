@@ -1,11 +1,18 @@
 {
   "hotkey_start": "F6",
   "hotkey_stop": "F7",
-  "click_interval": "0.085",
+  "click_interval": "0.050",
   "click_type": "우클릭",
   "click_mode": "반복",
   "random_variance": "0.07",
   "random_variance_enabled": true,
   "github_repo": "",
-  "appearance_mode": "light"
+  "appearance_mode": "light",
+  "hotkey_macro_record": "F8",
+  "hotkey_macro_start": "F9",
+  "hotkey_macro_stop": "F10",
+  "macro_target": "키보드+마우스",
+  "macro_repeat_mode": "무한",
+  "macro_repeat_count": "10",
+  "macro_speed": "1x"
 }

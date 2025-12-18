@@ -18,6 +18,14 @@ DEFAULT_CONFIG = {
     "random_variance_enabled": True,
     "appearance_mode": "dark",  # "dark" 또는 "light"
     "github_repo": "",  # GitHub 저장소 정보 (예: "username/repo-name")
+    # 매크로 설정
+    "hotkey_macro_record": "F8",
+    "hotkey_macro_start": "F9",
+    "hotkey_macro_stop": "F10",
+    "macro_target": "키보드+마우스",
+    "macro_repeat_mode": "1회",
+    "macro_repeat_count": "10",
+    "macro_speed": "1x",
 }
 
 

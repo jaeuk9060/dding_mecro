@@ -3,14 +3,17 @@
 """
 import threading
 from pathlib import Path
+from typing import Tuple
 import customtkinter as ctk
 from PIL import Image
 from pynput.mouse import Button, Controller as MouseController
 import keyboard  # 글로벌 단축키
 import tkinter.messagebox as messagebox
 
+from tkinter import filedialog
 from autoclicker.config import load_config, save_config
 from autoclicker.clicker import Clicker
+from autoclicker.macro_recorder import MacroRecorder, MacroPlayer, save_macro_to_file, load_macro_from_file
 from autoclicker.updater import Updater, check_update_async
 from autoclicker.version import __version__
 
@@ -19,6 +22,7 @@ from autoclicker.ui.pages.main_menu import MainMenuPage
 from autoclicker.ui.pages.autoclicker import AutoClickerPage
 from autoclicker.ui.pages.dding_info import DdingInfoPage
 from autoclicker.ui.pages.settings import SettingsPage
+from autoclicker.ui.pages.macro import MacroPage
 
 # appearance_mode는 설정에서 로드한 후 설정됨
 ctk.set_default_color_theme("blue")
@@ -28,8 +32,8 @@ class AutoClickerApp(ctk.CTk):
         super().__init__()
 
         self.title("띵타이쿤 일꾼용")
-        self.geometry("550x650")
-        self.minsize(400, 500)
+        self.geometry("600x850")
+        self.minsize(450, 700)
         self.resizable(True, True)
 
         # 아이콘 설정
@@ -49,9 +53,19 @@ class AutoClickerApp(ctk.CTk):
 
         self._hotkey_start = None
         self._hotkey_stop = None
+        
+        # 매크로 단축키
+        self._hotkey_macro_record = None
+        self._hotkey_macro_start = None
+        self._hotkey_macro_stop = None
 
         # 단축키 설정 중 상태
         self._setting_hotkey = None
+
+        # 매크로 녹화/재생
+        self._macro_recorder = MacroRecorder()
+        self._macro_player = MacroPlayer()
+        self._macro_actions = []
 
         # 현재 화면 상태
         self._current_page = "menu"
@@ -171,7 +185,8 @@ class AutoClickerApp(ctk.CTk):
             (MainMenuPage, "menu"),
             (AutoClickerPage, "autoclicker"),
             (DdingInfoPage, "dding_info"),
-            (SettingsPage, "settings")
+            (SettingsPage, "settings"),
+            (MacroPage, "macro")
         ]:
             page = PageClass(self.container, self)
             self.pages[name] = page
@@ -200,7 +215,7 @@ class AutoClickerApp(ctk.CTk):
         self._show_page(page_name)
 
     def go_back(self):
-        if self._current_page in ["autoclicker", "dding_info"]:
+        if self._current_page in ["autoclicker", "dding_info", "macro"]:
             self._show_page("menu")
         elif self._current_page == "settings":
             if self._settings_dirty:
@@ -246,7 +261,7 @@ class AutoClickerApp(ctk.CTk):
                 self.title_label.configure(text="설정")
             else:
                 self.settings_btn.pack(side="right", padx=5)
-                title_map = {"autoclicker": "오토마우스", "dding_info": "띵타이쿤 정보"}
+                title_map = {"autoclicker": "오토마우스", "dding_info": "띵타이쿤 정보", "macro": "매크로"}
                 self.title_label.configure(text=title_map.get(page_name, ""))
 
         # 페이지 표시
@@ -256,8 +271,19 @@ class AutoClickerApp(ctk.CTk):
         if page_name == "settings":
             settings_page = self.pages["settings"]
             if self._last_page == "autoclicker":
+                # 오토마우스 페이지에서: 오토마우스 설정만 표시
+                settings_page.autoclicker_settings_section.pack(fill="x", padx=0, pady=0, before=settings_page.settings_footer)
+                settings_page.macro_settings_section.pack_forget()
+                settings_page.main_settings_section.pack_forget()
+            elif self._last_page == "macro":
+                # 매크로 페이지에서: 매크로 설정만 표시
+                settings_page.autoclicker_settings_section.pack_forget()
+                settings_page.macro_settings_section.pack(fill="x", padx=0, pady=0, before=settings_page.settings_footer)
                 settings_page.main_settings_section.pack_forget()
             else:
+                # 메인 메뉴 등에서: 모든 설정 표시
+                settings_page.autoclicker_settings_section.pack(fill="x", padx=0, pady=0, before=settings_page.macro_settings_section)
+                settings_page.macro_settings_section.pack(fill="x", padx=0, pady=0, before=settings_page.main_settings_section)
                 settings_page.main_settings_section.pack(fill="x", padx=0, pady=0, before=settings_page.settings_footer)
 
         if self._current_page != "settings":
@@ -270,8 +296,18 @@ class AutoClickerApp(ctk.CTk):
             return
 
         self._setting_hotkey = which
-        btn = self.pages["settings"].hotkey_start_btn if which == "start" else self.pages["settings"].hotkey_stop_btn
-        btn.configure(text="...", fg_color="#3498db")
+        
+        # 버튼 매핑
+        btn_map = {
+            "start": self.pages["settings"].hotkey_start_btn,
+            "stop": self.pages["settings"].hotkey_stop_btn,
+            "macro_record": self.pages["settings"].hotkey_macro_record_btn,
+            "macro_start": self.pages["settings"].hotkey_macro_start_btn,
+            "macro_stop": self.pages["settings"].hotkey_macro_stop_btn,
+        }
+        btn = btn_map.get(which)
+        if btn:
+            btn.configure(text="...", fg_color="#3498db")
         self.pages["settings"].settings_status.configure(text="⌨️ 원하는 키를 누르세요...", text_color="#f39c12")
 
         keyboard.on_press(self._on_hotkey_press)
@@ -287,19 +323,43 @@ class AutoClickerApp(ctk.CTk):
 
     def _apply_hotkey(self, which: str, key: str):
         self.teardown_hotkeys()
-        if which == "start":
-            self.config["hotkey_start"] = key
-            self.pages["settings"].hotkey_start_btn.configure(text=key, fg_color="#404040")
-        else:
-            self.config["hotkey_stop"] = key
-            self.pages["settings"].hotkey_stop_btn.configure(text=key, fg_color="#404040")
+        
+        # 설정 키와 버튼 매핑
+        config_key_map = {
+            "start": "hotkey_start",
+            "stop": "hotkey_stop",
+            "macro_record": "hotkey_macro_record",
+            "macro_start": "hotkey_macro_start",
+            "macro_stop": "hotkey_macro_stop",
+        }
+        btn_map = {
+            "start": self.pages["settings"].hotkey_start_btn,
+            "stop": self.pages["settings"].hotkey_stop_btn,
+            "macro_record": self.pages["settings"].hotkey_macro_record_btn,
+            "macro_start": self.pages["settings"].hotkey_macro_start_btn,
+            "macro_stop": self.pages["settings"].hotkey_macro_stop_btn,
+        }
+        
+        config_key = config_key_map.get(which)
+        btn = btn_map.get(which)
+        
+        if config_key:
+            self.config[config_key] = key
+        if btn:
+            btn.configure(text=key, fg_color="#404040")
 
         self.setup_hotkeys()
         self.pages["autoclicker"].update_hotkey_labels()
+        
+        # 매크로 페이지 단축키 레이블도 업데이트
+        if which in ["macro_record", "macro_start", "macro_stop"]:
+            self.pages["macro"].update_hotkey_labels()
+        
         self._mark_settings_dirty(f"💾 단축키 변경됨: {key}")
 
     def setup_hotkeys(self):
         try:
+            # 오토마우스 단축키
             start_key = self.config.get("hotkey_start", "F6")
             stop_key = self.config.get("hotkey_stop", "F7")
             
@@ -312,6 +372,25 @@ class AutoClickerApp(ctk.CTk):
 
             self._hotkey_start = keyboard.add_hotkey(start_key, on_start_press)
             self._hotkey_stop = keyboard.add_hotkey(stop_key, on_stop_press)
+            
+            # 매크로 단축키 (매크로 탭에서만 작동)
+            macro_record_key = self.config.get("hotkey_macro_record", "F8")
+            macro_start_key = self.config.get("hotkey_macro_start", "F9")
+            macro_stop_key = self.config.get("hotkey_macro_stop", "F10")
+            
+            def on_macro_record_press():
+                if self._current_page == "macro":
+                    self.after(0, self._toggle_macro_record)
+            def on_macro_start_press():
+                if self._current_page == "macro":
+                    self.after(0, self._start_macro_play)
+            def on_macro_stop_press():
+                if self._current_page == "macro":
+                    self.after(0, self._stop_macro_play)
+
+            self._hotkey_macro_record = keyboard.add_hotkey(macro_record_key, on_macro_record_press)
+            self._hotkey_macro_start = keyboard.add_hotkey(macro_start_key, on_macro_start_press)
+            self._hotkey_macro_stop = keyboard.add_hotkey(macro_stop_key, on_macro_stop_press)
         except Exception as e:
             print(f"단축키 등록 실패: {e}")
 
@@ -323,6 +402,16 @@ class AutoClickerApp(ctk.CTk):
             if self._hotkey_stop is not None:
                 keyboard.remove_hotkey(self._hotkey_stop)
                 self._hotkey_stop = None
+            # 매크로 단축키 해제
+            if self._hotkey_macro_record is not None:
+                keyboard.remove_hotkey(self._hotkey_macro_record)
+                self._hotkey_macro_record = None
+            if self._hotkey_macro_start is not None:
+                keyboard.remove_hotkey(self._hotkey_macro_start)
+                self._hotkey_macro_start = None
+            if self._hotkey_macro_stop is not None:
+                keyboard.remove_hotkey(self._hotkey_macro_stop)
+                self._hotkey_macro_stop = None
         except Exception:
             pass
 
@@ -421,6 +510,11 @@ class AutoClickerApp(ctk.CTk):
         self.config["random_variance"] = str(variance)
         self.config["random_variance_enabled"] = bool(settings_page.variance_switch.get())
         
+        # 매크로 단축키 저장
+        self.config["hotkey_macro_record"] = settings_page.hotkey_macro_record_btn.cget("text")
+        self.config["hotkey_macro_start"] = settings_page.hotkey_macro_start_btn.cget("text")
+        self.config["hotkey_macro_stop"] = settings_page.hotkey_macro_stop_btn.cget("text")
+        
         theme_mode = settings_page.theme_mode.get()
         self.config["appearance_mode"] = "light" if theme_mode == "라이트모드" else "dark"
         
@@ -431,6 +525,7 @@ class AutoClickerApp(ctk.CTk):
         self.teardown_hotkeys()
         self.setup_hotkeys()
         self.pages["autoclicker"].update_hotkey_labels()
+        self.pages["macro"].update_hotkey_labels()
 
         self._refresh_settings_snapshot()
         settings_page.settings_status.configure(text="✅ 설정이 저장되었습니다.", text_color="#2ecc71")
@@ -544,6 +639,141 @@ class AutoClickerApp(ctk.CTk):
                     self.after(2000, self.on_closing)
         else:
             settings_page.settings_status.configure(text=f"⚠️ {message}", text_color="#e74c3c")
+
+    # ========== 매크로 관련 메서드 ==========
+    def _toggle_macro_record(self):
+        """매크로 녹화 시작/중지 토글 (단축키에서 호출)"""
+        macro_page = self.pages["macro"]
+        macro_page._toggle_record()
+
+    def _start_macro_play(self):
+        """매크로 재생 시작 (단축키에서 호출)"""
+        macro_page = self.pages["macro"]
+        macro_page._start_macro()
+
+    def _stop_macro_play(self):
+        """매크로 재생 중지 (단축키에서 호출)"""
+        macro_page = self.pages["macro"]
+        macro_page._stop_macro()
+
+    def start_macro_record(self):
+        """매크로 녹화 시작 (MacroPage에서 호출)"""
+        macro_page = self.pages["macro"]
+        
+        # 녹화 대상 설정
+        target = macro_page.record_target.get()
+        self._macro_recorder.set_record_target(target)
+        
+        # 녹화 단축키 설정 (이 키는 녹화에서 제외)
+        record_hotkey = self.config.get("hotkey_macro_record", "F8")
+        self._macro_recorder.set_record_hotkey(record_hotkey)
+        
+        # 녹화 상태 콜백 설정
+        def on_action_recorded(count):
+            self.after(0, lambda: macro_page.update_record_status(count))
+        
+        self._macro_recorder.set_action_callback(on_action_recorded)
+        
+        # 녹화 시작
+        self._macro_recorder.start_recording()
+    
+    def stop_macro_record(self) -> int:
+        """매크로 녹화 중지 (MacroPage에서 호출)"""
+        action_count = self._macro_recorder.stop_recording()
+        self._macro_actions = self._macro_recorder.get_actions()
+        return action_count
+    
+    def clear_macro(self):
+        """매크로 초기화 (MacroPage에서 호출)"""
+        self._macro_recorder.clear()
+        self._macro_actions = []
+    
+    def start_macro_play(self, repeat_mode: str, repeat_count: str, speed: str):
+        """매크로 재생 시작 (MacroPage에서 호출)"""
+        if not self._macro_actions:
+            self.pages["macro"].set_status("⚠️ 먼저 매크로를 녹화해주세요")
+            return
+        
+        # 반복 횟수 파싱
+        try:
+            count = int(repeat_count)
+            if count < 1:
+                count = 1
+        except ValueError:
+            count = 1
+        
+        # 속도 파싱 (0.5x, 1x, 2x, 4x)
+        speed_map = {"0.5x": 0.5, "1x": 1.0, "2x": 2.0, "4x": 4.0}
+        speed_value = speed_map.get(speed, 1.0)
+        
+        # 콜백 설정
+        def on_status(text):
+            self.after(0, lambda: self.pages["macro"].set_status(text))
+        
+        def on_finish():
+            self.after(0, self.pages["macro"].on_macro_finish)
+        
+        self._macro_player.set_callbacks(on_status, on_finish)
+        
+        # 재생 시작
+        self._macro_player.play(
+            self._macro_actions,
+            repeat_mode=repeat_mode,
+            repeat_count=count,
+            speed=speed_value
+        )
+    
+    def stop_macro_play(self):
+        """매크로 재생 중지 (MacroPage에서 호출)"""
+        self._macro_player.stop()
+    
+    def save_macro(self) -> Tuple[bool, str]:
+        """매크로를 파일로 저장"""
+        if not self._macro_actions:
+            return False, "저장할 매크로가 없습니다"
+        
+        # 파일 저장 다이얼로그
+        filepath = filedialog.asksaveasfilename(
+            title="매크로 저장",
+            defaultextension=".macro",
+            filetypes=[
+                ("매크로 파일", "*.macro"),
+                ("JSON 파일", "*.json"),
+                ("모든 파일", "*.*")
+            ],
+            initialfile="macro.macro"
+        )
+        
+        if not filepath:
+            return False, "저장이 취소되었습니다"
+        
+        success, message = save_macro_to_file(self._macro_actions, filepath)
+        return success, message
+    
+    def load_macro(self) -> Tuple[bool, str]:
+        """파일에서 매크로 불러오기"""
+        # 파일 열기 다이얼로그
+        filepath = filedialog.askopenfilename(
+            title="매크로 불러오기",
+            filetypes=[
+                ("매크로 파일", "*.macro"),
+                ("JSON 파일", "*.json"),
+                ("모든 파일", "*.*")
+            ]
+        )
+        
+        if not filepath:
+            return False, "불러오기가 취소되었습니다"
+        
+        actions, success, message = load_macro_from_file(filepath)
+        
+        if success:
+            self._macro_actions = actions
+            # 매크로 페이지 UI 업데이트
+            self.pages["macro"].update_record_status(len(actions))
+            self.pages["macro"]._macro_actions = actions
+        
+        return success, message
 
     def start(self):
         with self._lock:

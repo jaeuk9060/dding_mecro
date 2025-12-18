@@ -67,10 +67,11 @@ class MainMenuPage(BasePage):
         )
         self._menu_cards.append({"card": self.autoclicker_card, "type": "inactive"})
 
-        # --- 3. 매크로 카드 (준비 중) ---
+        # --- 3. 매크로 카드 ---
         self.macro_card = self._create_card(
-            cards_frame, "⌨️", "매크로", "준비 중입니다",
-            None, card_colors["inactive"]
+            cards_frame, "⌨️", "매크로", "키보드/마우스 동작을 녹화하고 재생합니다",
+            lambda e: self.controller.navigate_to_page("macro"),
+            card_colors["inactive"]
         )
         self._menu_cards.append({"card": self.macro_card, "type": "inactive"})
 
