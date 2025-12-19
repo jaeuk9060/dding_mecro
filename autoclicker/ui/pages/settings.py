@@ -8,12 +8,9 @@ from .base import BasePage
 
 class SettingsPage(BasePage):
     def setup_ui(self):
-        """설정 페이지 UI 생성"""
-        # 스크롤 가능한 컨테이너
         scrollable_frame = ctk.CTkScrollableFrame(self, fg_color="transparent")
         scrollable_frame.pack(fill="both", expand=True, padx=0, pady=0)
         
-        # ========== 오토마우스 설정 섹션 프레임 ==========
         self.autoclicker_settings_section = ctk.CTkFrame(scrollable_frame, fg_color="transparent")
         self.autoclicker_settings_section.pack(fill="x", padx=0, pady=0)
 
@@ -24,24 +21,20 @@ class SettingsPage(BasePage):
             anchor="w"
         ).pack(fill="x", padx=20, pady=(15, 10))
         
-        # 시작 단축키 항목
         self.hotkey_start_btn = self._create_setting_item(
             self.autoclicker_settings_section, "시작 단축키", "클릭 자동화를 시작합니다",
             self.controller.config.get("hotkey_start", "F6"),
             lambda: self.controller._start_hotkey_setting("start")
         )
 
-        # 중지 단축키 항목
         self.hotkey_stop_btn = self._create_setting_item(
             self.autoclicker_settings_section, "중지 단축키", "클릭 자동화를 중지합니다",
             self.controller.config.get("hotkey_stop", "F7"),
             lambda: self.controller._start_hotkey_setting("stop")
         )
 
-        # 랜덤 변동값 항목
         self._create_variance_item(self.autoclicker_settings_section)
 
-        # ========== 매크로 설정 섹션 프레임 ==========
         self.macro_settings_section = ctk.CTkFrame(scrollable_frame, fg_color="transparent")
         self.macro_settings_section.pack(fill="x", padx=0, pady=0)
 
@@ -52,28 +45,24 @@ class SettingsPage(BasePage):
             anchor="w"
         ).pack(fill="x", padx=20, pady=(15, 10))
 
-        # 녹화 단축키 항목
         self.hotkey_macro_record_btn = self._create_setting_item(
             self.macro_settings_section, "녹화 단축키", "매크로 녹화를 시작/중지합니다",
             self.controller.config.get("hotkey_macro_record", "F8"),
             lambda: self.controller._start_hotkey_setting("macro_record")
         )
 
-        # 재생 단축키 항목
         self.hotkey_macro_start_btn = self._create_setting_item(
             self.macro_settings_section, "재생 단축키", "녹화된 매크로를 재생합니다",
             self.controller.config.get("hotkey_macro_start", "F9"),
             lambda: self.controller._start_hotkey_setting("macro_start")
         )
 
-        # 중지 단축키 항목
         self.hotkey_macro_stop_btn = self._create_setting_item(
             self.macro_settings_section, "중지 단축키", "매크로 재생을 중지합니다",
             self.controller.config.get("hotkey_macro_stop", "F10"),
             lambda: self.controller._start_hotkey_setting("macro_stop")
         )
 
-        # ========== 메인 설정 섹션 프레임 ==========
         self.main_settings_section = ctk.CTkFrame(scrollable_frame, fg_color="transparent")
         self.main_settings_section.pack(fill="x", padx=0, pady=0)
 
@@ -84,13 +73,10 @@ class SettingsPage(BasePage):
             anchor="w"
         ).pack(fill="x", padx=20, pady=(10, 10))
 
-        # 테마 모드 항목
         self._create_theme_item(self.main_settings_section)
 
-        # 업데이트 항목
         self._create_update_item(self.main_settings_section)
 
-        # 하단 공통 요소
         self.settings_footer = ctk.CTkFrame(scrollable_frame, fg_color="transparent")
         self.settings_footer.pack(fill="x", padx=0, pady=0)
 

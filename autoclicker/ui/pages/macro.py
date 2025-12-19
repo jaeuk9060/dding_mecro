@@ -5,19 +5,15 @@ from .base import BasePage
 
 class MacroPage(BasePage):
     def setup_ui(self):
-        """매크로 페이지 UI 생성"""
-        # 녹화 설정 박스
         record_box = ctk.CTkFrame(self)
         record_box.pack(pady=10, fill="x")
 
-        # 섹션 제목
         ctk.CTkLabel(
             record_box, 
             text="🎬 매크로 녹화", 
             font=ctk.CTkFont(size=18, weight="bold")
         ).pack(padx=15, pady=(15, 10), anchor="w")
 
-        # 녹화 대상 선택
         row_target = ctk.CTkFrame(record_box)
         row_target.pack(padx=15, pady=10, fill="x")
 
@@ -30,7 +26,6 @@ class MacroPage(BasePage):
         self.record_target.set(self.controller.config.get("macro_target", "키보드+마우스"))
         self.record_target.pack(side="right", padx=15)
 
-        # 녹화 버튼
         record_btns = ctk.CTkFrame(record_box)
         record_btns.pack(padx=15, pady=(5, 15), fill="x")
 
@@ -57,7 +52,6 @@ class MacroPage(BasePage):
         )
         self.clear_btn.pack(side="right", padx=(10, 15), expand=True, fill="x")
 
-        # 녹화 상태 표시
         self.record_status = ctk.CTkLabel(
             record_box, 
             text="녹화된 동작: 0개", 
@@ -66,7 +60,6 @@ class MacroPage(BasePage):
         )
         self.record_status.pack(padx=15, pady=(0, 10))
 
-        # 저장/불러오기 버튼
         file_btns = ctk.CTkFrame(record_box)
         file_btns.pack(padx=15, pady=(0, 15), fill="x")
 
@@ -92,18 +85,15 @@ class MacroPage(BasePage):
         )
         self.load_btn.pack(side="right", padx=(10, 15), expand=True, fill="x")
 
-        # 재생 설정 박스
         play_box = ctk.CTkFrame(self)
         play_box.pack(pady=10, fill="x")
 
-        # 섹션 제목
         ctk.CTkLabel(
             play_box, 
             text="▶️ 매크로 재생", 
             font=ctk.CTkFont(size=18, weight="bold")
         ).pack(padx=15, pady=(15, 10), anchor="w")
 
-        # 반복 모드
         row_repeat = ctk.CTkFrame(play_box)
         row_repeat.pack(padx=15, pady=10, fill="x")
 
@@ -117,7 +107,6 @@ class MacroPage(BasePage):
         self.repeat_mode.set(self.controller.config.get("macro_repeat_mode", "1회"))
         self.repeat_mode.pack(side="right", padx=15)
 
-        # 반복 횟수 (반복 모드일 때만)
         self.repeat_count_row = ctk.CTkFrame(play_box)
         self.repeat_count_row.pack(padx=15, pady=10, fill="x")
 
@@ -137,7 +126,6 @@ class MacroPage(BasePage):
         self.repeat_count.insert(0, self.controller.config.get("macro_repeat_count", "10"))
         self.repeat_count.pack(side="right", padx=15)
 
-        # 재생 속도
         row_speed = ctk.CTkFrame(play_box)
         row_speed.pack(padx=15, pady=10, fill="x")
 
@@ -158,10 +146,8 @@ class MacroPage(BasePage):
         )
         self.speed_hint.pack(padx=15, pady=(0, 15))
 
-        # 초기 모드에 따라 반복 횟수 표시/숨김
         self._on_repeat_mode_change(self.controller.config.get("macro_repeat_mode", "1회"))
 
-        # 재생 버튼
         btns = ctk.CTkFrame(self)
         btns.pack(pady=15, fill="x")
 
@@ -188,7 +174,6 @@ class MacroPage(BasePage):
         )
         self.stop_btn.pack(side="right", padx=15, pady=15, expand=True, fill="x")
 
-        # 상태 표시
         self.status = ctk.CTkLabel(self, text="⏸️ 대기 중...", font=ctk.CTkFont(size=16))
         self.status.pack(pady=(12, 0))
 
@@ -200,7 +185,6 @@ class MacroPage(BasePage):
         )
         self.hotkey_display.pack(pady=(6, 15))
 
-        # 하단 정보 표시 (저작권 + 버전)
         bottom_frame = ctk.CTkFrame(self, fg_color="transparent")
         bottom_frame.pack(side="bottom", fill="x", pady=(10, 0))
 
@@ -224,7 +208,6 @@ class MacroPage(BasePage):
         self._macro_actions = []
 
     def _on_repeat_mode_change(self, mode: str):
-        """반복 모드 변경 시 UI 업데이트"""
         if mode == "반복":
             self.repeat_count_row.pack(padx=15, pady=10, fill="x", after=self.repeat_mode.master)
             self.repeat_count.configure(state="normal")
@@ -233,14 +216,12 @@ class MacroPage(BasePage):
             self.repeat_count_row.pack_forget()
 
     def _toggle_record(self):
-        """녹화 시작/중지 토글"""
         if self._recording:
             self._stop_record()
         else:
             self._start_record()
 
     def _start_record(self):
-        """녹화 시작"""
         self._recording = True
         self._macro_actions = []
         record_key = self.controller.config.get("hotkey_macro_record", "F8")
@@ -249,26 +230,22 @@ class MacroPage(BasePage):
         self.record_status.configure(text="녹화된 동작: 0개")
         self.start_btn.configure(state="disabled")
         
-        # 실제 녹화 로직은 controller에서 처리
         if hasattr(self.controller, 'start_macro_record'):
             self.controller.start_macro_record()
 
     def _stop_record(self):
-        """녹화 중지"""
         self._recording = False
         record_key = self.controller.config.get("hotkey_macro_record", "F8")
         self.record_btn.configure(text=f"🔴 녹화 시작 ({record_key})", fg_color="#3498db", hover_color="#2980b9")
         self.status.configure(text="⏸️ 대기 중...")
         self.start_btn.configure(state="normal")
         
-        # 실제 녹화 중지 로직은 controller에서 처리
         if hasattr(self.controller, 'stop_macro_record'):
             action_count = self.controller.stop_macro_record()
             self._macro_actions = getattr(self.controller, '_macro_actions', [])
             self.record_status.configure(text=f"녹화된 동작: {len(self._macro_actions)}개")
 
     def _clear_macro(self):
-        """매크로 초기화"""
         self._macro_actions = []
         self.record_status.configure(text="녹화된 동작: 0개")
         self.status.configure(text="⏸️ 매크로가 초기화되었습니다")
@@ -277,7 +254,6 @@ class MacroPage(BasePage):
             self.controller.clear_macro()
 
     def _save_macro(self):
-        """매크로 저장"""
         if not self._macro_actions and not getattr(self.controller, '_macro_actions', []):
             self.status.configure(text="⚠️ 저장할 매크로가 없습니다")
             return
@@ -290,7 +266,6 @@ class MacroPage(BasePage):
                 self.status.configure(text=f"⚠️ {message}")
 
     def _load_macro(self):
-        """매크로 불러오기"""
         if hasattr(self.controller, 'load_macro'):
             success, message = self.controller.load_macro()
             if success:
@@ -300,7 +275,6 @@ class MacroPage(BasePage):
                 self.status.configure(text=f"⚠️ {message}")
 
     def _start_macro(self):
-        """매크로 재생 시작"""
         if not self._macro_actions and not getattr(self.controller, '_macro_actions', []):
             self.status.configure(text="⚠️ 먼저 매크로를 녹화해주세요")
             return
@@ -311,7 +285,6 @@ class MacroPage(BasePage):
         self.record_btn.configure(state="disabled")
         self.status.configure(text="▶️ 매크로 재생 중...")
         
-        # 설정 저장
         self.controller.config["macro_target"] = self.record_target.get()
         self.controller.config["macro_repeat_mode"] = self.repeat_mode.get()
         self.controller.config["macro_repeat_count"] = self.repeat_count.get()
@@ -325,7 +298,6 @@ class MacroPage(BasePage):
             )
 
     def _stop_macro(self):
-        """매크로 재생 중지"""
         self._playing = False
         self.start_btn.configure(state="normal")
         self.stop_btn.configure(state="disabled")
@@ -336,15 +308,12 @@ class MacroPage(BasePage):
             self.controller.stop_macro_play()
 
     def update_record_status(self, count: int):
-        """녹화된 동작 수 업데이트"""
         self.record_status.configure(text=f"녹화된 동작: {count}개")
 
     def set_status(self, text: str):
-        """상태 텍스트 업데이트"""
         self.status.configure(text=text)
 
     def update_hotkey_labels(self):
-        """단축키 변경 시 레이블 업데이트"""
         record = self.controller.config.get("hotkey_macro_record", "F8")
         start = self.controller.config.get("hotkey_macro_start", "F9")
         stop = self.controller.config.get("hotkey_macro_stop", "F10")
@@ -354,7 +323,6 @@ class MacroPage(BasePage):
         self.hotkey_display.configure(text=f"단축키: {record} 녹화 / {start} 재생 / {stop} 중지")
 
     def on_macro_finish(self):
-        """매크로 재생 완료 시 호출"""
         self._playing = False
         self.start_btn.configure(state="normal")
         self.stop_btn.configure(state="disabled")

@@ -1,20 +1,14 @@
-"""
-손처럼 클릭 - 설치 스크립트
-"""
 from setuptools import setup, find_packages
 from pathlib import Path
 
-# version.py에서 버전 정보 읽기
 version_file = Path(__file__).parent / "autoclicker" / "version.py"
 exec(open(version_file, encoding="utf-8").read())
 
-# README 파일 읽기 (있는 경우)
 readme_file = Path(__file__).parent / "README.md"
 long_description = ""
 if readme_file.exists():
     long_description = readme_file.read_text(encoding="utf-8")
 
-# requirements.txt 읽기
 requirements_file = Path(__file__).parent / "requirements.txt"
 install_requires = []
 if requirements_file.exists():
@@ -31,7 +25,8 @@ setup(
     description="자동 클릭 유틸리티 애플리케이션",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/jaeuk9060/dding_mecro",  # 실제 GitHub URL로 변경 필요
+    license="MIT",
+    url="https://github.com/jaeuk9060/dding_mecro",
     packages=find_packages(),
     package_data={
         "autoclicker": [

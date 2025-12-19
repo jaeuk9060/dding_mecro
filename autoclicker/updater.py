@@ -1,6 +1,3 @@
-"""
-GitHub 기반 자동 업데이트 모듈
-"""
 import os
 import sys
 import json
@@ -23,10 +20,6 @@ from autoclicker.config import load_config, save_config
 
 
 def _compare_versions(v1: str, v2: str) -> int:
-    """
-    버전 비교 함수
-    Returns: v1 > v2면 1, v1 == v2면 0, v1 < v2면 -1
-    """
     if pkg_version:
         try:
             v1_parsed = pkg_version.parse(v1)
@@ -40,7 +33,6 @@ def _compare_versions(v1: str, v2: str) -> int:
         except:
             pass
     
-    # 간단한 버전 비교 (packaging이 없을 경우)
     def parse_version(v):
         parts = []
         for part in v.replace("v", "").split("."):
@@ -67,23 +59,15 @@ def _compare_versions(v1: str, v2: str) -> int:
 
 
 class Updater:
-    """GitHub Releases API를 사용한 업데이트 관리자"""
     
     def __init__(self):
         self.config = load_config()
         self.current_version = __version__
-        # GitHub 저장소 정보 (username/repo 형식)
-        self.repo = self.config.get("github_repo", "")  # 예: "username/repo-name"
+        self.repo = self.config.get("github_repo", "")
         self.latest_version: Optional[str] = None
         self.latest_release: Optional[Dict] = None
         
     def check_update(self, timeout: int = 5) -> Tuple[bool, Optional[str], Optional[str]]:
-        """
-        최신 버전 확인
-        
-        Returns:
-            (업데이트 있음, 최신 버전, 릴리즈 노트) 튜플
-        """
         if not requests:
             return False, None, "requests 라이브러리가 설치되지 않았습니다."
         
@@ -91,7 +75,6 @@ class Updater:
             return False, None, "GitHub 저장소 정보가 설정되지 않았습니다."
         
         try:
-            # GitHub Releases API 호출
             url = f"https://api.github.com/repos/{self.repo}/releases/latest"
             response = requests.get(url, timeout=timeout)
             
@@ -102,11 +85,10 @@ class Updater:
             self.latest_release = release_data
             self.latest_version = release_data.get("tag_name", "").lstrip("v")
             
-            # 버전 비교
             try:
                 comparison = _compare_versions(self.latest_version, self.current_version)
                 
-                if comparison > 0:  # latest > current
+                if comparison > 0:
                     release_notes = release_data.get("body", "업데이트 정보 없음")
                     return True, self.latest_version, release_notes
                 else:
@@ -122,22 +104,12 @@ class Updater:
             return False, None, f"오류 발생: {e}"
     
     def download_update(self, download_path: Optional[str] = None) -> Tuple[bool, str]:
-        """
-        최신 버전 다운로드
-        
-        Args:
-            download_path: 다운로드 경로 (None이면 현재 디렉토리)
-            
-        Returns:
-            (성공 여부, 메시지) 튜플
-        """
         if not self.latest_release:
             has_update, _, _ = self.check_update()
             if not has_update:
                 return False, "다운로드할 업데이트가 없습니다."
         
         try:
-            # Windows용 실행 파일 찾기 (.exe)
             assets = self.latest_release.get("assets", [])
             exe_asset = None
             
@@ -153,14 +125,12 @@ class Updater:
             if not download_url:
                 return False, "다운로드 URL을 찾을 수 없습니다."
             
-            # 다운로드 경로 설정
             if download_path is None:
                 download_path = os.path.dirname(os.path.abspath(__file__))
             
             filename = exe_asset.get("name", f"update_{self.latest_version}.exe")
             filepath = os.path.join(download_path, filename)
             
-            # 파일 다운로드
             response = requests.get(download_url, stream=True, timeout=30)
             response.raise_for_status()
             
@@ -179,20 +149,10 @@ class Updater:
             return False, f"다운로드 실패: {e}"
     
     def install_update(self, installer_path: str) -> bool:
-        """
-        업데이트 설치 (실행 파일 실행)
-        
-        Args:
-            installer_path: 설치 파일 경로
-            
-        Returns:
-            성공 여부
-        """
         try:
             if not os.path.exists(installer_path):
                 return False
             
-            # 백그라운드에서 설치 프로그램 실행
             subprocess.Popen([installer_path], shell=True)
             return True
         except Exception as e:
@@ -200,19 +160,12 @@ class Updater:
             return False
     
     def set_repo(self, repo: str):
-        """GitHub 저장소 설정"""
         self.repo = repo
         self.config["github_repo"] = repo
         save_config(self.config)
 
 
 def check_update_async(callback):
-    """
-    비동기로 업데이트 확인
-    
-    Args:
-        callback: (has_update, latest_version, message) 인자를 받는 콜백 함수
-    """
     def _check():
         updater = Updater()
         has_update, version, message = updater.check_update()

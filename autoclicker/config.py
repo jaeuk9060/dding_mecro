@@ -1,13 +1,9 @@
-"""설정 파일 관리 모듈."""
-
 from pathlib import Path
 import json
 
-# 패키지 루트 기준 설정 파일 경로
 BASE_DIR = Path(__file__).resolve().parent
 CONFIG_FILE = BASE_DIR / "config.json"
 
-# 기본 설정
 DEFAULT_CONFIG = {
     "hotkey_start": "F6",
     "hotkey_stop": "F7",
@@ -16,9 +12,8 @@ DEFAULT_CONFIG = {
     "click_mode": "반복",
     "random_variance": "0.03",
     "random_variance_enabled": True,
-    "appearance_mode": "dark",  # "dark" 또는 "light"
-    "github_repo": "",  # GitHub 저장소 정보 (예: "username/repo-name")
-    # 매크로 설정
+    "appearance_mode": "dark",
+    "github_repo": "",
     "hotkey_macro_record": "F8",
     "hotkey_macro_start": "F9",
     "hotkey_macro_stop": "F10",
@@ -30,7 +25,6 @@ DEFAULT_CONFIG = {
 
 
 def load_config():
-    """설정 파일을 로드하고 누락된 키를 기본값으로 채움."""
     if CONFIG_FILE.exists():
         try:
             with CONFIG_FILE.open("r", encoding="utf-8") as f:
@@ -45,7 +39,6 @@ def load_config():
 
 
 def save_config(config):
-    """설정 파일 저장."""
     try:
         CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
         with CONFIG_FILE.open("w", encoding="utf-8") as f:

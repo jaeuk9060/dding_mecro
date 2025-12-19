@@ -1,13 +1,10 @@
-"""
-손처럼 클릭 GUI 애플리케이션
-"""
 import threading
 from pathlib import Path
 from typing import Tuple
 import customtkinter as ctk
 from PIL import Image
 from pynput.mouse import Button, Controller as MouseController
-import keyboard  # 글로벌 단축키
+import keyboard
 import tkinter.messagebox as messagebox
 
 from tkinter import filedialog
@@ -17,14 +14,12 @@ from autoclicker.macro_recorder import MacroRecorder, MacroPlayer, save_macro_to
 from autoclicker.updater import Updater, check_update_async
 from autoclicker.version import __version__
 
-# 페이지 클래스 임포트
 from autoclicker.ui.pages.main_menu import MainMenuPage
 from autoclicker.ui.pages.autoclicker import AutoClickerPage
 from autoclicker.ui.pages.dding_info import DdingInfoPage
 from autoclicker.ui.pages.settings import SettingsPage
 from autoclicker.ui.pages.macro import MacroPage
 
-# appearance_mode는 설정에서 로드한 후 설정됨
 ctk.set_default_color_theme("blue")
 
 class AutoClickerApp(ctk.CTk):
@@ -36,13 +31,11 @@ class AutoClickerApp(ctk.CTk):
         self.minsize(450, 700)
         self.resizable(True, True)
 
-        # 아이콘 설정
         self._set_icon()
 
         self.mouse = MouseController()
         self.config = load_config()
         
-        # appearance_mode 설정 적용
         appearance_mode = self.config.get("appearance_mode", "dark")
         ctk.set_appearance_mode(appearance_mode)
 
@@ -54,39 +47,32 @@ class AutoClickerApp(ctk.CTk):
         self._hotkey_start = None
         self._hotkey_stop = None
         
-        # 매크로 단축키
         self._hotkey_macro_record = None
         self._hotkey_macro_start = None
         self._hotkey_macro_stop = None
 
-        # 단축키 설정 중 상태
         self._setting_hotkey = None
 
-        # 매크로 녹화/재생
         self._macro_recorder = MacroRecorder()
         self._macro_player = MacroPlayer()
         self._macro_actions = []
 
-        # 현재 화면 상태
         self._current_page = "menu"
         self._last_page = "menu"
         self._settings_dirty = False
         self._settings_snapshot = {}
         self._suppress_dirty = False
 
-        # 헤더 로고 이미지
         self.logo_image = self._load_logo_image()
 
         self.create_widgets()
         self.setup_hotkeys()
         
-        # 업데이트 체크 (백그라운드)
         self.check_for_updates()
 
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def _set_icon(self):
-        """윈도우 아이콘 설정"""
         base_dir = Path(__file__).resolve().parent.parent
         assets_dir = base_dir / "assets"
 
@@ -106,7 +92,6 @@ class AutoClickerApp(ctk.CTk):
                     continue
 
     def _load_logo_image(self):
-        """헤더 로고 이미지 로드"""
         base_dir = Path(__file__).resolve().parent.parent
         assets_dir = base_dir / "assets"
         logo_candidates = [
@@ -124,7 +109,6 @@ class AutoClickerApp(ctk.CTk):
         return None
 
     def create_widgets(self):
-        # 상단 헤더
         header = ctk.CTkFrame(self, fg_color="transparent")
         header.pack(fill="x", padx=20, pady=(15, 5))
 
@@ -146,7 +130,6 @@ class AutoClickerApp(ctk.CTk):
         )
         self.title_label.pack(side="left")
 
-        # 설정 버튼
         self.settings_btn = ctk.CTkButton(
             header,
             text="⚙️",
@@ -160,7 +143,6 @@ class AutoClickerApp(ctk.CTk):
         )
         self.settings_btn.pack(side="right", padx=5)
 
-        # 뒤로가기 버튼
         self.back_btn = ctk.CTkButton(
             header,
             text="←",
@@ -175,11 +157,9 @@ class AutoClickerApp(ctk.CTk):
         self.back_btn.pack(side="right", padx=5)
         self.back_btn.pack_forget()
 
-        # 페이지 컨테이너
         self.container = ctk.CTkFrame(self, fg_color="transparent")
         self.container.pack(fill="both", expand=True, padx=25, pady=15)
 
-        # 페이지들 초기화
         self.pages = {}
         for PageClass, name in [
             (MainMenuPage, "menu"),
@@ -194,7 +174,6 @@ class AutoClickerApp(ctk.CTk):
         self._show_page("menu")
 
     def _get_card_colors(self):
-        """현재 테마에 맞는 카드 색상 반환"""
         current_mode = ctk.get_appearance_mode()
         if current_mode == "Light":
             return {
@@ -245,11 +224,9 @@ class AutoClickerApp(ctk.CTk):
             self._show_page("settings")
 
     def _show_page(self, page_name: str):
-        # 모든 페이지 숨기기
         for page in self.pages.values():
             page.pack_forget()
 
-        # 헤더 UI 업데이트
         if page_name == "menu":
             self.back_btn.pack_forget()
             self.settings_btn.pack(side="right", padx=5)
@@ -264,24 +241,19 @@ class AutoClickerApp(ctk.CTk):
                 title_map = {"autoclicker": "오토마우스", "dding_info": "띵타이쿤 정보", "macro": "매크로"}
                 self.title_label.configure(text=title_map.get(page_name, ""))
 
-        # 페이지 표시
         self.pages[page_name].pack(fill="both", expand=True)
 
-        # 설정 페이지 진입 시 섹션 가시성 처리
         if page_name == "settings":
             settings_page = self.pages["settings"]
             if self._last_page == "autoclicker":
-                # 오토마우스 페이지에서: 오토마우스 설정만 표시
                 settings_page.autoclicker_settings_section.pack(fill="x", padx=0, pady=0, before=settings_page.settings_footer)
                 settings_page.macro_settings_section.pack_forget()
                 settings_page.main_settings_section.pack_forget()
             elif self._last_page == "macro":
-                # 매크로 페이지에서: 매크로 설정만 표시
                 settings_page.autoclicker_settings_section.pack_forget()
                 settings_page.macro_settings_section.pack(fill="x", padx=0, pady=0, before=settings_page.settings_footer)
                 settings_page.main_settings_section.pack_forget()
             else:
-                # 메인 메뉴 등에서: 모든 설정 표시
                 settings_page.autoclicker_settings_section.pack(fill="x", padx=0, pady=0, before=settings_page.macro_settings_section)
                 settings_page.macro_settings_section.pack(fill="x", padx=0, pady=0, before=settings_page.main_settings_section)
                 settings_page.main_settings_section.pack(fill="x", padx=0, pady=0, before=settings_page.settings_footer)
@@ -297,7 +269,6 @@ class AutoClickerApp(ctk.CTk):
 
         self._setting_hotkey = which
         
-        # 버튼 매핑
         btn_map = {
             "start": self.pages["settings"].hotkey_start_btn,
             "stop": self.pages["settings"].hotkey_stop_btn,
@@ -324,7 +295,6 @@ class AutoClickerApp(ctk.CTk):
     def _apply_hotkey(self, which: str, key: str):
         self.teardown_hotkeys()
         
-        # 설정 키와 버튼 매핑
         config_key_map = {
             "start": "hotkey_start",
             "stop": "hotkey_stop",
@@ -351,7 +321,6 @@ class AutoClickerApp(ctk.CTk):
         self.setup_hotkeys()
         self.pages["autoclicker"].update_hotkey_labels()
         
-        # 매크로 페이지 단축키 레이블도 업데이트
         if which in ["macro_record", "macro_start", "macro_stop"]:
             self.pages["macro"].update_hotkey_labels()
         
@@ -359,7 +328,6 @@ class AutoClickerApp(ctk.CTk):
 
     def setup_hotkeys(self):
         try:
-            # 오토마우스 단축키
             start_key = self.config.get("hotkey_start", "F6")
             stop_key = self.config.get("hotkey_stop", "F7")
             
@@ -373,7 +341,6 @@ class AutoClickerApp(ctk.CTk):
             self._hotkey_start = keyboard.add_hotkey(start_key, on_start_press)
             self._hotkey_stop = keyboard.add_hotkey(stop_key, on_stop_press)
             
-            # 매크로 단축키 (매크로 탭에서만 작동)
             macro_record_key = self.config.get("hotkey_macro_record", "F8")
             macro_start_key = self.config.get("hotkey_macro_start", "F9")
             macro_stop_key = self.config.get("hotkey_macro_stop", "F10")
@@ -751,8 +718,6 @@ class AutoClickerApp(ctk.CTk):
         return success, message
     
     def load_macro(self) -> Tuple[bool, str]:
-        """파일에서 매크로 불러오기"""
-        # 파일 열기 다이얼로그
         filepath = filedialog.askopenfilename(
             title="매크로 불러오기",
             filetypes=[
@@ -769,7 +734,6 @@ class AutoClickerApp(ctk.CTk):
         
         if success:
             self._macro_actions = actions
-            # 매크로 페이지 UI 업데이트
             self.pages["macro"].update_record_status(len(actions))
             self.pages["macro"]._macro_actions = actions
         

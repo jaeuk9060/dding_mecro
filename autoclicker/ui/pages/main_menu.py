@@ -7,12 +7,9 @@ class MainMenuPage(BasePage):
     def __init__(self, parent, controller):
         self._menu_cards = []
         super().__init__(parent, controller)
-        # setup_ui() is called in BasePage.__init__
         self._update_price_timer()
 
     def setup_ui(self):
-        """메인 메뉴 페이지 UI 생성 (카드 형태)"""
-        # --- 타이머 박스 ---
         self.timer_frame = ctk.CTkFrame(
             self, 
             fg_color=("#f0f7ff", "#1e293b"),
@@ -45,13 +42,11 @@ class MainMenuPage(BasePage):
         )
         self.timer_label.pack(side="left")
 
-        # 카드 컨테이너 (스크롤 가능)
         cards_frame = ctk.CTkScrollableFrame(self, fg_color="transparent")
         cards_frame.pack(fill="both", expand=True, padx=20, pady=(0, 0))
 
         card_colors = self.controller._get_card_colors()
 
-        # --- 1. 띵타이쿤 정보 카드 ---
         self.info_card = self._create_card(
             cards_frame, "ℹ️", "띵타이쿤", "띵타이쿤의 최신 소식을 확인하세요",
             lambda e: self.controller.navigate_to_page("dding_info"),
@@ -59,7 +54,6 @@ class MainMenuPage(BasePage):
         )
         self._menu_cards.append({"card": self.info_card, "type": "inactive"})
 
-        # --- 2. 오토마우스 카드 ---
         self.autoclicker_card = self._create_card(
             cards_frame, "🖱️", "오토마우스", "자동으로 마우스를 클릭합니다",
             lambda e: self.controller.navigate_to_page("autoclicker"),
@@ -67,7 +61,6 @@ class MainMenuPage(BasePage):
         )
         self._menu_cards.append({"card": self.autoclicker_card, "type": "inactive"})
 
-        # --- 3. 매크로 카드 ---
         self.macro_card = self._create_card(
             cards_frame, "⌨️", "매크로", "키보드/마우스 동작을 녹화하고 재생합니다",
             lambda e: self.controller.navigate_to_page("macro"),
@@ -75,7 +68,6 @@ class MainMenuPage(BasePage):
         )
         self._menu_cards.append({"card": self.macro_card, "type": "inactive"})
 
-        # --- 4. 기타 기능 카드 ---
         self.card3 = self._create_card(
             cards_frame, "📝", "기능 3", "준비 중입니다",
             None, card_colors["inactive"]
@@ -88,7 +80,6 @@ class MainMenuPage(BasePage):
         )
         self._menu_cards.append({"card": self.card4, "type": "inactive"})
 
-        # 하단 정보 표시 (저작권 + 버전)
         bottom_frame = ctk.CTkFrame(self, fg_color="transparent")
         bottom_frame.pack(side="bottom", fill="x", pady=(10, 0))
         
@@ -157,17 +148,14 @@ class MainMenuPage(BasePage):
         return card
 
     def _update_price_timer(self):
-        """가격 변동 타이머 업데이트 (1, 3, 6, 9, 12, 15, 18, 21, 24, 27, 30일 오전 3시)"""
         try:
             now = datetime.now()
             change_days = [1, 3, 6, 9, 12, 15, 18, 21, 24, 27, 30]
             
             next_change = None
             
-            # 1. 이번 달에서 다음 변동일 찾기
             for day in change_days:
                 try:
-                    # 해당 월에 해당 일이 존재하는지 확인 (예: 2월 30일 등 방지)
                     target = now.replace(day=day, hour=3, minute=0, second=0, microsecond=0)
                     if target > now:
                         next_change = target
@@ -175,7 +163,6 @@ class MainMenuPage(BasePage):
                 except ValueError:
                     continue
             
-            # 2. 이번 달에 더 이상 없으면 다음 달 1일 오전 3시로 설정
             if not next_change:
                 if now.month == 12:
                     next_change = now.replace(year=now.year + 1, month=1, day=1, hour=3, minute=0, second=0, microsecond=0)
@@ -196,7 +183,6 @@ class MainMenuPage(BasePage):
         self.after(1000, self._update_price_timer)
 
     def update_card_colors(self):
-        """테마 변경 시 카드 색상 업데이트"""
         card_colors = self.controller._get_card_colors()
         for card_info in self._menu_cards:
             card = card_info["card"]

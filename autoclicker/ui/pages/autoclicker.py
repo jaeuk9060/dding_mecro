@@ -4,12 +4,9 @@ from .base import BasePage
 
 class AutoClickerPage(BasePage):
     def setup_ui(self):
-        """오토마우스 페이지 UI 생성"""
-        # 클릭 설정 박스
         box = ctk.CTkFrame(self)
         box.pack(pady=10, fill="x")
 
-        # 클릭 타입
         row1 = ctk.CTkFrame(box)
         row1.pack(padx=15, pady=(15, 10), fill="x")
 
@@ -18,7 +15,6 @@ class AutoClickerPage(BasePage):
         self.click_type.set(self.controller.config.get("click_type", "좌클릭"))
         self.click_type.pack(side="right", padx=15)
 
-        # 클릭 모드
         row_mode = ctk.CTkFrame(box)
         row_mode.pack(padx=15, pady=10, fill="x")
 
@@ -32,7 +28,6 @@ class AutoClickerPage(BasePage):
         self.click_mode.set(self.controller.config.get("click_mode", "반복"))
         self.click_mode.pack(side="right", padx=15)
 
-        # 간격(초)
         self.interval_row = ctk.CTkFrame(box)
         self.interval_row.pack(padx=15, pady=10, fill="x")
 
@@ -50,10 +45,8 @@ class AutoClickerPage(BasePage):
         )
         self.hint.pack(padx=15, pady=(0, 15))
 
-        # 초기 모드에 따라 간격 표시/숨김
         self._on_mode_change(self.controller.config.get("click_mode", "반복"))
 
-        # 버튼
         btns = ctk.CTkFrame(self)
         btns.pack(pady=15, fill="x")
 
@@ -74,7 +67,6 @@ class AutoClickerPage(BasePage):
         )
         self.stop_btn.pack(side="right", padx=15, pady=15, expand=True, fill="x")
 
-        # 상태
         self.status = ctk.CTkLabel(self, text="⏸️ 대기 중...", font=ctk.CTkFont(size=16))
         self.status.pack(pady=(12, 0))
 
@@ -85,7 +77,6 @@ class AutoClickerPage(BasePage):
         )
         self.hotkey_display.pack(pady=(6, 15))
         
-        # 하단 정보 표시 (저작권 + 버전)
         bottom_frame = ctk.CTkFrame(self, fg_color="transparent")
         bottom_frame.pack(side="bottom", fill="x", pady=(10, 0))
         
@@ -104,7 +95,6 @@ class AutoClickerPage(BasePage):
         ).pack(side="right", padx=5)
 
     def _on_mode_change(self, mode: str):
-        """클릭 모드 변경 시 UI 업데이트"""
         if mode == "꾹누르기":
             self.interval_sec.configure(state="disabled")
             self.interval_label.configure(text_color="gray")
@@ -115,7 +105,6 @@ class AutoClickerPage(BasePage):
             self.hint.configure(text="예: 1초=1.0 / 0.1초=0.1 / 1ms=0.001")
 
     def update_hotkey_labels(self):
-        """단축키 변경 시 레이블 업데이트"""
         start = self.controller.config.get("hotkey_start", "F6")
         stop = self.controller.config.get("hotkey_stop", "F7")
         self.start_btn.configure(text=f"▶️ 시작 ({start})")

@@ -6,15 +6,12 @@ from .base import BasePage
 
 class DdingInfoPage(BasePage):
     def setup_ui(self):
-        """명타이쿤 정보 페이지 UI 생성"""
-        # 스크롤 가능한 컨테이너
         scroll_frame = ctk.CTkScrollableFrame(self, fg_color="transparent")
         scroll_frame.pack(fill="both", expand=True, padx=20, pady=(0, 0))
 
         card_colors = self.controller._get_card_colors()
 
         def toggle_section(frame, arrow_label):
-            """섹션 접기/펼치기 토글"""
             if frame.winfo_viewable():
                 frame.pack_forget()
                 arrow_label.configure(text="▶")
@@ -22,7 +19,6 @@ class DdingInfoPage(BasePage):
                 frame.pack(fill="x", padx=10, pady=(0, 10))
                 arrow_label.configure(text="▼")
 
-        # --- 1. 공식 섹션 컨테이너 ---
         official_container = ctk.CTkFrame(scroll_frame, fg_color="transparent")
         official_container.pack(fill="x", pady=(10, 5))
 
@@ -51,7 +47,6 @@ class DdingInfoPage(BasePage):
         self._create_link_button(official_content_frame, "💬 디스코드", "https://discord.com/invite/CNK4qmvh3g", card_colors)
         self._create_link_button(official_content_frame, "☕ 네이버 카페", "https://cafe.naver.com/ddingtycoon", card_colors)
 
-        # --- 2. 요리 섹션 컨테이너 ---
         cooking_container = ctk.CTkFrame(scroll_frame, fg_color="transparent")
         cooking_container.pack(fill="x", pady=(10, 5))
 
@@ -79,7 +74,6 @@ class DdingInfoPage(BasePage):
         self._create_alert_button(cooking_content_frame, "📊 요리 계산기", "요리 계산기 기능은 준비 중입니다.", card_colors)
         self._create_alert_button(cooking_content_frame, "🏆 요리 순위", "요리 순위 기능은 준비 중입니다.", card_colors)
 
-        # 하단 정보 표시
         bottom_frame = ctk.CTkFrame(self, fg_color="transparent")
         bottom_frame.pack(side="bottom", fill="x", pady=(10, 0), padx=25)
         
