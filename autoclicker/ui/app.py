@@ -19,6 +19,7 @@ from autoclicker.ui.pages.autoclicker import AutoClickerPage
 from autoclicker.ui.pages.dding_info import DdingInfoPage
 from autoclicker.ui.pages.settings import SettingsPage
 from autoclicker.ui.pages.macro import MacroPage
+from autoclicker.ui.pages.gangwa_calculator import GangwaCalculatorPage
 
 ctk.set_default_color_theme("blue")
 
@@ -166,7 +167,8 @@ class AutoClickerApp(ctk.CTk):
             (AutoClickerPage, "autoclicker"),
             (DdingInfoPage, "dding_info"),
             (SettingsPage, "settings"),
-            (MacroPage, "macro")
+            (MacroPage, "macro"),
+            (GangwaCalculatorPage, "gangwa_calculator")
         ]:
             page = PageClass(self.container, self)
             self.pages[name] = page
@@ -194,7 +196,7 @@ class AutoClickerApp(ctk.CTk):
         self._show_page(page_name)
 
     def go_back(self):
-        if self._current_page in ["autoclicker", "dding_info", "macro"]:
+        if self._current_page in ["autoclicker", "dding_info", "macro", "gangwa_calculator"]:
             self._show_page("menu")
         elif self._current_page == "settings":
             if self._settings_dirty:
@@ -238,7 +240,7 @@ class AutoClickerApp(ctk.CTk):
                 self.title_label.configure(text="설정")
             else:
                 self.settings_btn.pack(side="right", padx=5)
-                title_map = {"autoclicker": "오토마우스", "dding_info": "띵타이쿤 정보", "macro": "매크로"}
+                title_map = {"autoclicker": "오토마우스", "dding_info": "띵타이쿤 정보", "macro": "매크로", "gangwa_calculator": "강화계산기"}
                 self.title_label.configure(text=title_map.get(page_name, ""))
 
         self.pages[page_name].pack(fill="both", expand=True)

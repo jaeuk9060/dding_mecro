@@ -54,6 +54,13 @@ class MainMenuPage(BasePage):
         )
         self._menu_cards.append({"card": self.info_card, "type": "inactive"})
 
+        self.gangwa_card = self._create_card(
+            cards_frame, "⚔️", "강화계산기", "강화에 필요한 재료를 확인하세요",
+            lambda e: self.controller.navigate_to_page("gangwa_calculator"),
+            card_colors["inactive"]
+        )
+        self._menu_cards.append({"card": self.gangwa_card, "type": "inactive"})
+
         self.autoclicker_card = self._create_card(
             cards_frame, "🖱️", "오토마우스", "자동으로 마우스를 클릭합니다",
             lambda e: self.controller.navigate_to_page("autoclicker"),
